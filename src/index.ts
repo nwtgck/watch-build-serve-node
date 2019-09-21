@@ -4,8 +4,22 @@ import { spawn } from 'child_process';
 import * as chokidar from 'chokidar';
 import * as express from 'express';
 import * as getPort from "get-port";
+import * as yargs from "yargs";
 
 type Event =  'add'|'addDir'|'change'|'unlink'|'unlinkDir';
+
+// Define command-line parser
+const parser = yargs
+  .option("ignore", {
+    describe: "Ignore file or directory",
+    type: "array"
+  })
+  .alias('ignore', 'i');
+
+// Parse command-line options
+const args = parser.parse(process.argv);
+
+const ignores: string[] = args['ignore'] as string[] || [];
 
 // TODO: Hard code
 const buildCommand: string = 'npm rum build';
@@ -59,13 +73,7 @@ function watchAndBuild(buildCommand: string) {
   };
 
   chokidar.watch('.', {
-    // TODO: Hard code
-    ignored: [
-      './dist',
-      './.idea',
-      './node_modules',
-      './.git'
-    ]
+    ignored: ignores,
   }).on('all', watchListener);
 }
 
