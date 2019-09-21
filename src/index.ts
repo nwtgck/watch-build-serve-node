@@ -1,0 +1,84 @@
+#!/usr/bin/env node
+
+import { spawn } from 'child_process';
+import * as chokidar from 'chokidar';
+import * as express from 'express';
+import * as getPort from "get-port";
+
+type Event =  'add'|'addDir'|'change'|'unlink'|'unlinkDir';
+
+// TODO: Hard code
+const buildCommand: string = 'npm rum build';
+// TODO: Hard code
+const publicDir: string = './dist';
+
+function runCommand(cmd: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const s = spawn('/bin/sh', ['-c', cmd]);
+    s.stdout.pipe(process.stdout);
+    s.stderr.pipe(process.stderr);
+    s.on('error', (err) => {
+      console.error('Error: ', err);
+    });
+    s.on('exit', (code) => {
+      resolve();
+    });
+  });
+}
+
+function watchAndBuild(buildCommand: string) {
+  let fileUpdated: boolean = false;
+  let runLock: Promise<void> = Promise.resolve();
+  async function lockRunCommand(cmd: string) {
+    fileUpdated = false;
+    // Lock to run one build-command
+    await runLock;
+    // Run build-command
+    runLock = runLock.then(() => runCommand(cmd));
+    await runLock;
+    console.log('Build finished!');
+    runTime = new Date();
+  }
+
+  console.log("Watching...");
+  let runTime = new Date();
+  const watchListener = async (event: Event, path: string) => {
+    const prevRunTime = runTime;
+    fileUpdated = true;
+    console.log(event, path);
+    // TODO: Hard code: number
+    if (new Date().getTime() - prevRunTime.getTime() < 1000) {
+      setTimeout(() => {
+        if (fileUpdated) {
+          lockRunCommand(buildCommand);
+        }
+      }, 1000); // TODO: Hard code: number
+      return;
+    }
+    lockRunCommand(buildCommand);
+  };
+
+  chokidar.watch('.', {
+    // TODO: Hard code
+    ignored: [
+      './dist',
+      './.idea',
+      './node_modules',
+      './.git'
+    ]
+  }).on('all', watchListener);
+}
+
+// Watch file changes and build loop
+watchAndBuild(buildCommand);
+
+(async () => {
+  // Get HTTP port
+  const port = await getPort({port: getPort.makeRange(8080, 65535)});
+  const app = express();
+  app.listen(port, () => {
+    console.log(`Listening on http://localhost:${port}`);
+  });
+  // Host built files
+  app.use('/', express.static(publicDir));
+})();
