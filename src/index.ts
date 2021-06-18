@@ -14,17 +14,24 @@ const parser = yargs
     describe: "Ignore file or directory",
     type: "array"
   })
-  .alias('ignore', 'i');
+  .alias('ignore', 'i')
+  .option("public", {
+    describe: "Public directory path (e.g. ./dist)",
+    type: "string",
+    demandOption: true,
+  })
+  .option("build-command", {
+    describe: "Build command",
+    type: "string",
+    demandOption: true,
+  });
 
 // Parse command-line options
 const args = parser.parse(process.argv);
 
 const ignores: string[] = args['ignore'] as string[] || [];
-
-// TODO: Hard code
-const buildCommand: string = 'npm rum build';
-// TODO: Hard code
-const publicDir: string = './dist';
+const buildCommand: string = args['build-command'];
+const publicDir: string = args['public'];
 
 function runCommand(cmd: string): Promise<void> {
   return new Promise((resolve, reject) => {
