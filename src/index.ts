@@ -47,6 +47,8 @@ function runCommand(cmd: string): Promise<void> {
   });
 }
 
+let servedHttpPort: number | undefined;
+
 function watchAndBuild(buildCommand: string) {
   let fileUpdated: boolean = false;
   let runLock: Promise<void> = Promise.resolve();
@@ -58,6 +60,7 @@ function watchAndBuild(buildCommand: string) {
     runLock = runLock.then(() => runCommand(cmd));
     await runLock;
     console.log('Build finished!');
+    console.log(`Listening on http://localhost:${servedHttpPort}`);
     runTime = new Date();
   }
 
@@ -89,10 +92,10 @@ watchAndBuild(buildCommand);
 
 (async () => {
   // Get HTTP port
-  const port = await getPort({port: getPort.makeRange(8080, 65535)});
+  servedHttpPort = await getPort({port: getPort.makeRange(8080, 65535)});
   const app = express();
-  app.listen(port, () => {
-    console.log(`Listening on http://localhost:${port}`);
+  app.listen(servedHttpPort, () => {
+    console.log(`Listening on http://localhost:${servedHttpPort}`);
   });
   // Host built files
   app.use('/', express.static(publicDir));
