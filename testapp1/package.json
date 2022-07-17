@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build",
+    "real-serve": "echo hello"
   },
   "dependencies": {
     "core-js": "^3.8.3",
@@ -14,6 +15,7 @@
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-typescript": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
-    "typescript": "~4.5.5"
+    "typescript": "~4.5.5",
+    "watch-build-serve": "file:.."
   }
 }
